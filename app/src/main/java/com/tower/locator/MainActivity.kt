@@ -16,6 +16,9 @@ import android.telephony.CellInfoLte
 import android.telephony.CellInfoNr
 import android.telephony.CellIdentityNr
 import android.telephony.CellSignalStrengthNr
+import android.util.Log
+import com.tower.locator.model.CellPayload
+import com.google.gson.Gson
 
 
 class MainActivity : AppCompatActivity() {
@@ -26,8 +29,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_main)
-
-        outputText = findViewById(R.id.outputText)
 
         telephonyManager = getSystemService(TELEPHONY_SERVICE) as TelephonyManager
 
@@ -107,11 +108,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private lateinit var outputText: TextView
-
     private fun updateCellTowerData(cellInfoList: List<CellInfo>) {
-
-        val sb = StringBuilder()
 
         for (cellInfo in cellInfoList) {
             // ignore secondary cells
@@ -122,55 +119,41 @@ class MainActivity : AppCompatActivity() {
                     val id = cellInfo.cellIdentity
                     val ss = cellInfo.cellSignalStrength
 
-                    val mcc = id.mccString?.toIntOrNull() ?: 0
-                    val mnc = id.mncString?.toIntOrNull() ?: 0
-                    val tac = id.tac
-                    val ci = id.ci
-                    val rsrp = if (ss.rsrp != CellInfo.UNAVAILABLE) ss.rsrp else null
-
-                    sb.append(
-                        """
-                        LTE CELL
-                        MCC: $mcc
-                        MNC: $mnc
-                        TAC: $tac
-                        CI: $ci
-                        RSRP: $rsrp dBm
-                        
-                        """.trimIndent()
+                    val payload = CellPayload(
+                        mcc = id.mccString?.toIntOrNull() ?: -1,
+                        mnc = id.mncString?.toIntOrNull() ?: -1,
+                        tac = id.tac,
+                        cid = id.ci.toLong(),
+                        rsrp = if (ss.rsrp != CellInfo.UNAVAILABLE) ss.rsrp else null
                     )
+                    val gson = Gson()
+                    val json = gson.toJson(payload)
+
+                    Log.d("CELL_JSON", json)
                 }
 
                 is CellInfoNr -> {
                     val id = cellInfo.cellIdentity as CellIdentityNr
                     val ss = cellInfo.cellSignalStrength as CellSignalStrengthNr
 
-                    val mcc = id.mccString?.toIntOrNull() ?: 0
-                    val mnc = id.mncString?.toIntOrNull() ?: 0
-                    val tac = id.tac
-                    val nci = id.nci
-                    val ssRsrp : Int? =
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                            if (ss.ssRsrp != CellInfo.UNAVAILABLE) ss.ssRsrp else null
-                        } else {
-                            null
-                        }
-
-                    sb.append(
-                        """
-                        5G NR CELL
-                        MCC: $mcc
-                        MNC: $mnc
-                        TAC: $tac
-                        NCI: $nci
-                        SS-RSRP: $ssRsrp dBm
-                        
-                        """.trimIndent()
+                    val payload = CellPayload(
+                        mcc = id.mccString?.toIntOrNull() ?: -1,
+                        mnc = id.mncString?.toIntOrNull() ?: -1,
+                        tac = id.tac,
+                        cid = id.nci,
+                        rsrp =
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                if (ss.ssRsrp != CellInfo.UNAVAILABLE) ss.ssRsrp else null
+                            } else {
+                                null
+                            }
                     )
+                    val gson = Gson()
+                    val json = gson.toJson(payload)
+
+                    Log.d("CELL_JSON", json)
                 }
             }
         }
-
-        outputText.text = sb.toString()
     }
 }
