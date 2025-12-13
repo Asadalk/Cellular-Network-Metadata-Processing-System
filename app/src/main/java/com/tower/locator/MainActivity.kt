@@ -15,6 +15,8 @@ import android.widget.TextView
 import android.telephony.CellInfoLte
 import android.telephony.CellInfoNr
 import android.telephony.CellIdentityNr
+import android.telephony.CellSignalStrengthNr
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -112,14 +114,19 @@ class MainActivity : AppCompatActivity() {
         val sb = StringBuilder()
 
         for (cellInfo in cellInfoList) {
+            // ignore secondary cells
+            if (!cellInfo.isRegistered) continue
+
             when (cellInfo) {
                 is CellInfoLte -> {
                     val id = cellInfo.cellIdentity
+                    val ss = cellInfo.cellSignalStrength
 
                     val mcc = id.mccString?.toIntOrNull() ?: 0
                     val mnc = id.mncString?.toIntOrNull() ?: 0
                     val tac = id.tac
                     val ci = id.ci
+                    val rsrp = if (ss.rsrp != CellInfo.UNAVAILABLE) ss.rsrp else null
 
                     sb.append(
                         """
@@ -128,6 +135,7 @@ class MainActivity : AppCompatActivity() {
                         MNC: $mnc
                         TAC: $tac
                         CI: $ci
+                        RSRP: $rsrp dBm
                         
                         """.trimIndent()
                     )
@@ -135,11 +143,18 @@ class MainActivity : AppCompatActivity() {
 
                 is CellInfoNr -> {
                     val id = cellInfo.cellIdentity as CellIdentityNr
+                    val ss = cellInfo.cellSignalStrength as CellSignalStrengthNr
 
                     val mcc = id.mccString?.toIntOrNull() ?: 0
                     val mnc = id.mncString?.toIntOrNull() ?: 0
                     val tac = id.tac
                     val nci = id.nci
+                    val ssRsrp : Int? =
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            if (ss.ssRsrp != CellInfo.UNAVAILABLE) ss.ssRsrp else null
+                        } else {
+                            null
+                        }
 
                     sb.append(
                         """
@@ -148,6 +163,7 @@ class MainActivity : AppCompatActivity() {
                         MNC: $mnc
                         TAC: $tac
                         NCI: $nci
+                        SS-RSRP: $ssRsrp dBm
                         
                         """.trimIndent()
                     )
