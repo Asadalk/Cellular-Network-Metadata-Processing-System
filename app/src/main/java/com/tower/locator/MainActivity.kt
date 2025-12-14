@@ -1,5 +1,11 @@
 package com.tower.locator
 
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import okhttp3.ResponseBody
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
@@ -11,7 +17,6 @@ import android.telephony.PhoneStateListener
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import android.widget.TextView
 import android.telephony.CellInfoLte
 import android.telephony.CellInfoNr
 import android.telephony.CellIdentityNr
@@ -19,6 +24,7 @@ import android.telephony.CellSignalStrengthNr
 import android.util.Log
 import com.tower.locator.model.CellPayload
 import com.google.gson.Gson
+import com.tower.locator.network.ApiService
 
 
 class MainActivity : AppCompatActivity() {
@@ -116,6 +122,7 @@ class MainActivity : AppCompatActivity() {
 
             when (cellInfo) {
                 is CellInfoLte -> {
+                    Log.d("CELL", "Entered LTE block")
                     val id = cellInfo.cellIdentity
                     val ss = cellInfo.cellSignalStrength
 
@@ -130,9 +137,29 @@ class MainActivity : AppCompatActivity() {
                     val json = gson.toJson(payload)
 
                     Log.d("CELL_JSON", json)
+
+
+                    // send to backend
+                    val retrofit = Retrofit.Builder()
+                        .baseUrl("http://10.56.248.22:8000/")
+                        .addConverterFactory(GsonConverterFactory.create())
+                        .build()
+
+                    val api = retrofit.create(ApiService::class.java)
+
+                    api.sendCellData(payload).enqueue(object : Callback<ResponseBody> {
+                        override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                            Log.d("NETWORK", "Success")
+                        }
+
+                        override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                            Log.e("NETWORK", "Failed", t)
+                        }
+                    })
                 }
 
                 is CellInfoNr -> {
+                    Log.d("CELL", "Entered NR block")
                     val id = cellInfo.cellIdentity as CellIdentityNr
                     val ss = cellInfo.cellSignalStrength as CellSignalStrengthNr
 
@@ -152,6 +179,24 @@ class MainActivity : AppCompatActivity() {
                     val json = gson.toJson(payload)
 
                     Log.d("CELL_JSON", json)
+
+                    // send to backend
+                    val retrofit = Retrofit.Builder()
+                        .baseUrl("http://10.56.248.22:8000/")
+                        .addConverterFactory(GsonConverterFactory.create())
+                        .build()
+
+                    val api = retrofit.create(ApiService::class.java)
+
+                    api.sendCellData(payload).enqueue(object : Callback<ResponseBody> {
+                        override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                            Log.d("NETWORK", "Success")
+                        }
+
+                        override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                            Log.e("NETWORK", "Failed", t)
+                        }
+                    })
                 }
             }
         }
