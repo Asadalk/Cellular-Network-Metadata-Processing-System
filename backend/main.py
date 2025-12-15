@@ -1,13 +1,22 @@
 from fastapi import FastAPI
 import psycopg2
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+DB_HOST = os.getenv("DB_HOST")
+DB_DATABASE = os.getenv("DB_DATABASE")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 app = FastAPI()
 
 conn = psycopg2.connect(
-    host="localhost",
-    database="tower_locator",
-    user="postgres",
-    password="masum"
+    host="DB_HOST",
+    database="DB_DATABASE",
+    user="DB_USER",
+    password="DB_PASSWORD"
 )
 
 @app.post("/cell")
