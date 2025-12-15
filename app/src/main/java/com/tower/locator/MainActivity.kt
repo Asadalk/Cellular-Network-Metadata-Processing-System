@@ -24,6 +24,7 @@ import android.telephony.CellSignalStrengthNr
 import android.util.Log
 import com.tower.locator.model.CellPayload
 import com.google.gson.Gson
+import com.tower.locator.model.LocateResponse
 import com.tower.locator.network.ApiService
 
 
@@ -141,7 +142,7 @@ class MainActivity : AppCompatActivity() {
 
                     // send to backend
                     val retrofit = Retrofit.Builder()
-                        .baseUrl("http://10.56.248.22:8000/")
+                        .baseUrl("http://10.60.233.22:8000/")
                         .addConverterFactory(GsonConverterFactory.create())
                         .build()
 
@@ -154,6 +155,35 @@ class MainActivity : AppCompatActivity() {
 
                         override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                             Log.e("NETWORK", "Failed", t)
+                        }
+                    })
+
+                    api.locateCell(payload).enqueue(object : Callback<LocateResponse> {
+
+                        override fun onResponse(
+                            call: Call<LocateResponse>,
+                            response: Response<LocateResponse>
+                        ) {
+                            val body = response.body()
+
+                            if (body == null) {
+                                Log.e("LOCATE", "Empty response")
+                                return
+                            }
+
+                            if (body.error != null) {
+                                Log.d("LOCATE", "Tower not found")
+                                return
+                            }
+
+                            Log.d(
+                                "LOCATE",
+                                "Lat=${body.lat}, Lon=${body.lon}, Radius=${body.radius}"
+                            )
+                        }
+
+                        override fun onFailure(call: Call<LocateResponse>, t: Throwable) {
+                            Log.e("LOCATE", "Request failed", t)
                         }
                     })
                 }
@@ -182,7 +212,7 @@ class MainActivity : AppCompatActivity() {
 
                     // send to backend
                     val retrofit = Retrofit.Builder()
-                        .baseUrl("http://10.56.248.22:8000/")
+                        .baseUrl("http://10.60.233.22:8000/")
                         .addConverterFactory(GsonConverterFactory.create())
                         .build()
 
@@ -197,6 +227,36 @@ class MainActivity : AppCompatActivity() {
                             Log.e("NETWORK", "Failed", t)
                         }
                     })
+
+                    api.locateCell(payload).enqueue(object : Callback<LocateResponse> {
+
+                        override fun onResponse(
+                            call: Call<LocateResponse>,
+                            response: Response<LocateResponse>
+                        ) {
+                            val body = response.body()
+
+                            if (body == null) {
+                                Log.e("LOCATE", "Empty response")
+                                return
+                            }
+
+                            if (body.error != null) {
+                                Log.d("LOCATE", "Tower not found")
+                                return
+                            }
+
+                            Log.d(
+                                "LOCATE",
+                                "Lat=${body.lat}, Lon=${body.lon}, Radius=${body.radius}"
+                            )
+                        }
+
+                        override fun onFailure(call: Call<LocateResponse>, t: Throwable) {
+                            Log.e("LOCATE", "Request failed", t)
+                        }
+                    })
+
                 }
             }
         }
