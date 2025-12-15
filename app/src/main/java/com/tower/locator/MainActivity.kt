@@ -373,4 +373,18 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            telephonyCallback?.let {
+                telephonyManager.unregisterTelephonyCallback(it)
+            }
+        } else {
+            phoneStateListener?.let {
+                telephonyManager.listen(it, PhoneStateListener.LISTEN_NONE)
+            }
+        }
+    }
 }
