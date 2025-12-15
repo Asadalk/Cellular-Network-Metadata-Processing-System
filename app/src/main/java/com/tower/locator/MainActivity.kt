@@ -26,16 +26,34 @@ import com.tower.locator.model.CellPayload
 import com.google.gson.Gson
 import com.tower.locator.model.LocateResponse
 import com.tower.locator.network.ApiService
+import org.osmdroid.config.Configuration
+import org.osmdroid.views.MapView
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.Polygon
 
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var telephonyManager: TelephonyManager
+    private lateinit var map: MapView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContentView(R.layout.activity_main)
+
+        Configuration.getInstance().load(
+            applicationContext,
+            getSharedPreferences("osmdroid", MODE_PRIVATE)
+        )
+        Configuration.getInstance().userAgentValue = packageName
+
+        map = findViewById(R.id.map)
+        map.setTileSource(TileSourceFactory.MAPNIK)
+        map.setMultiTouchControls(true)
+        map.controller.setZoom(5.0)
+        map.controller.setCenter(org.osmdroid.util.GeoPoint(20.5937, 78.9629)) // India
 
         telephonyManager = getSystemService(TELEPHONY_SERVICE) as TelephonyManager
 
@@ -133,6 +151,11 @@ class MainActivity : AppCompatActivity() {
                         tac = id.tac,
                         cid = id.ci.toLong(),
                         rsrp = if (ss.rsrp != CellInfo.UNAVAILABLE) ss.rsrp else null
+//                          mcc = 404,
+//                          mnc = 5,
+//                          tac = 221,
+//                          cid = 2171,
+//                          rsrp = -80
                     )
                     val gson = Gson()
                     val json = gson.toJson(payload)
@@ -158,29 +181,71 @@ class MainActivity : AppCompatActivity() {
                         }
                     })
 
+                    Log.e("LOCATE_DEBUG", "ABOUT TO CALL /locate")
+
                     api.locateCell(payload).enqueue(object : Callback<LocateResponse> {
 
                         override fun onResponse(
                             call: Call<LocateResponse>,
                             response: Response<LocateResponse>
                         ) {
+                            Log.e("LOCATE_DEBUG", "onResponse HIT")
+
                             val body = response.body()
 
+                            Log.e("LOCATE_DEBUG", "raw response = ${response.body()}")
+
                             if (body == null) {
-                                Log.e("LOCATE", "Empty response")
+                                Log.e("LOCATE", "Response body is null")
                                 return
                             }
+
+                            Log.e(
+                                "LOCATE_DEBUG",
+                                "lat=${body.lat}, lon=${body.lon}, radius=${body.radius}"
+                            )
 
                             if (body.error != null) {
                                 Log.d("LOCATE", "Tower not found")
                                 return
                             }
 
-                            Log.d(
-                                "LOCATE",
-                                "Lat=${body.lat}, Lon=${body.lon}, Radius=${body.radius}"
-                            )
+                            val lat = body.lat!!
+                            val lon = body.lon!!
+                            val radius = body.radius!!.toDouble()
+
+                            runOnUiThread {
+
+                                val point = GeoPoint(lat, lon)
+
+                                // Clear previous overlays
+                                map.overlays.clear()
+
+                                // Marker
+                                val marker = Marker(map)
+                                marker.position = point
+                                marker.title = "Serving Tower"
+                                marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                                map.overlays.add(marker)
+
+                                // Radius circle
+                                val circle = Polygon()
+                                circle.points = Polygon.pointsAsCircle(point, radius)
+                                circle.fillColor = 0x221E88E5
+                                circle.strokeColor = 0xFF1E88E5.toInt()
+                                circle.strokeWidth = 2f
+                                map.overlays.add(circle)
+
+                                // Move camera
+                                map.controller.setZoom(15.0)
+                                map.controller.setCenter(point)
+
+                                map.invalidate()
+
+                                Log.d("LOCATE", "Rendered tower on map")
+                            }
                         }
+
 
                         override fun onFailure(call: Call<LocateResponse>, t: Throwable) {
                             Log.e("LOCATE", "Request failed", t)
@@ -204,6 +269,11 @@ class MainActivity : AppCompatActivity() {
                             } else {
                                 null
                             }
+//                        mcc = 404,
+//                        mnc = 5,
+//                        tac = 221,
+//                        cid = 2171,
+//                        rsrp = -80
                     )
                     val gson = Gson()
                     val json = gson.toJson(payload)
@@ -228,29 +298,71 @@ class MainActivity : AppCompatActivity() {
                         }
                     })
 
+                    Log.e("LOCATE_DEBUG", "ABOUT TO CALL /locate")
+
                     api.locateCell(payload).enqueue(object : Callback<LocateResponse> {
 
                         override fun onResponse(
                             call: Call<LocateResponse>,
                             response: Response<LocateResponse>
                         ) {
+                            Log.e("LOCATE_DEBUG", "onResponse HIT")
+
                             val body = response.body()
 
+                            Log.e("LOCATE_DEBUG", "raw response = ${response.body()}")
+
                             if (body == null) {
-                                Log.e("LOCATE", "Empty response")
+                                Log.e("LOCATE", "Response body is null")
                                 return
                             }
+
+                            Log.e(
+                                "LOCATE_DEBUG",
+                                "lat=${body.lat}, lon=${body.lon}, radius=${body.radius}"
+                            )
 
                             if (body.error != null) {
                                 Log.d("LOCATE", "Tower not found")
                                 return
                             }
 
-                            Log.d(
-                                "LOCATE",
-                                "Lat=${body.lat}, Lon=${body.lon}, Radius=${body.radius}"
-                            )
+                            val lat = body.lat!!
+                            val lon = body.lon!!
+                            val radius = body.radius!!.toDouble()
+
+                            runOnUiThread {
+
+                                val point = GeoPoint(lat, lon)
+
+                                // Clear previous overlays
+                                map.overlays.clear()
+
+                                // Marker
+                                val marker = Marker(map)
+                                marker.position = point
+                                marker.title = "Serving Tower"
+                                marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                                map.overlays.add(marker)
+
+                                // Radius circle
+                                val circle = Polygon()
+                                circle.points = Polygon.pointsAsCircle(point, radius)
+                                circle.fillColor = 0x221E88E5
+                                circle.strokeColor = 0xFF1E88E5.toInt()
+                                circle.strokeWidth = 2f
+                                map.overlays.add(circle)
+
+                                // Move camera
+                                map.controller.setZoom(15.0)
+                                map.controller.setCenter(point)
+
+                                map.invalidate()
+
+                                Log.d("LOCATE", "Rendered tower on map")
+                            }
                         }
+
 
                         override fun onFailure(call: Call<LocateResponse>, t: Throwable) {
                             Log.e("LOCATE", "Request failed", t)
