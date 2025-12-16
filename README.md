@@ -166,6 +166,25 @@ These limitations are intentional and documented.
 
 ---
 
+## Demo
+
+**Backend logs (FastAPI + PostgreSQL)**
+Shows successful request handling and cell tower lookup.
+
+![Backend Logs]  
+
+<img width="1508" height="1010" alt="Screenshot 2025-12-16 112105" src="https://github.com/user-attachments/assets/5ea2c8c1-0fd7-4559-9c16-580aa66801d4" />
+
+**Android App Demo**
+Demonstrates cell metadata extraction and fixed-radius visualization.
+
+[▶ Watch demo video]  
+
+https://github.com/user-attachments/assets/80330a3e-09d1-4a71-9cd1-1293a5fbadf0
+
+
+---
+
 ## Status
 
 MVP complete.  
