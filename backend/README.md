@@ -32,7 +32,7 @@ Location Response (lat, lon, radius)
 
 - **Backend Framework:** FastAPI
 - **Database:** PostgreSQL
-- **DB Driver:** psycopg2
+- **DB Driver:** psycopg2 (thread-safe connection pool)
 - **API Protocol:** REST (JSON)
 - **Deployment Mode:** Local network (LAN)
 
@@ -62,7 +62,11 @@ CREATE TABLE cell_towers (
     lat DOUBLE PRECISION,
     lon DOUBLE PRECISION
 );
+
+CREATE INDEX idx_cell_towers_lookup ON cell_towers (mcc, mnc, tac, cid);
 ```
+
+The full script is in `schema.sql`. The composite index on the lookup key lets `/locate` use an index lookup instead of a full table scan.
 ## API Endpoint
 
 ### POST `/locate`
@@ -88,7 +92,7 @@ Performs an exact-match lookup for a given cell identity.
 }
 ```
 
-**Failure Response**  
+**Failure Response** (HTTP 404)  
 ```json
 {
   "error": "tower_not_found"
@@ -101,7 +105,8 @@ Performs an exact-match lookup for a given cell identity.
 
 - Performs exact match on (mcc, mnc, tac, cid)
 - Returns the first matching tower
-- If no match exists, returns an explicit error
+- If no match exists, returns an explicit error with HTTP 404
+- Invalid request bodies are rejected with HTTP 422 (Pydantic validation)
 - No fallback, approximation, or nearest-neighbor logic is used
 
 This ensures deterministic and explainable behavior.
@@ -139,13 +144,21 @@ Nearest-neighbor or partial matching is intentionally excluded.
 ### Install Dependencies
 
 ```bash
-pip install fastapi uvicorn psycopg2
+pip install -r requirements.txt
+```
+
+### Configure the Database
+
+Copy `.env.example` to `.env` and fill in your PostgreSQL credentials, then create the table and index:
+
+```bash
+psql -d <DB_DATABASE> -f schema.sql
 ```
 
 ### Start Server (LAN Accessible)
 
 ```bash
-pip install fastapi uvicorn psycopg2
+uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
 The backend will be accessible at:
